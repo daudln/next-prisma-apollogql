@@ -1,0 +1,190 @@
+// // This is your Prisma schema file,
+// // learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  accounts      Account[]
+  sessions      Session[]
+  customer      Customer?
+  Employee      Employee?
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Define the Shipment model
+model Shipment {
+  id              Int                  @id @default(autoincrement())
+  unique_id       String               @unique @default(cuid())
+  origin          String
+  destination     String
+  weight_kg       Float
+  status          String
+  delivery_date   DateTime
+  serviceType     ServiceType          @relation(fields: [service_type_id], references: [id])
+  service_type_id Int
+  // Relationships
+  warehouse       Warehouse?           @relation(fields: [warehouse_id], references: [id])
+  warehouse_id    Int?
+  route           TransportationRoute? @relation(fields: [route_id], references: [id])
+  route_id        Int?
+  customer        Customer?            @relation(fields: [customer_id], references: [id])
+  customer_id     Int?
+  // Additional Relationships
+  employee        Employee?            @relation(fields: [employee_id], references: [id])
+  employee_id     Int?
+  invoice         Invoice?             @relation(fields: [invoice_id], references: [id])
+  invoice_id      Int?
+  payment         Payment?             @relation(fields: [payment_id], references: [id])
+  payment_id      Int?
+  location        Location?            @relation(fields: [location_id], references: [id])
+  location_id     Int?
+  vehicle         Vehicle?             @relation(fields: [vehicle_id], references: [id])
+  vehicle_id      Int?
+  expense         Expense?             @relation(fields: [expense_id], references: [id])
+  expense_id      Int?
+}
+
+// Define the Warehouse model
+model Warehouse {
+  id        Int        @id @default(autoincrement())
+  unique_id String     @unique @default(cuid())
+  location  String
+  capacity  Float
+  shipments Shipment[]
+}
+
+// Define the TransportationRoute model
+model TransportationRoute {
+  id         Int        @id @default(autoincrement())
+  unique_id  String     @unique @default(cuid())
+  route_name String
+  shipments  Shipment[]
+}
+
+// Define the Customer model
+model Customer {
+  id        Int        @id @default(autoincrement())
+  unique_id String     @unique @default(cuid())
+  user      User       @relation(fields: [userId], references: [id])
+  shipments Shipment[]
+  userId    String     @unique
+}
+
+// Define the ServiceType model
+model ServiceType {
+  id           Int        @id @default(autoincrement())
+  unique_id    String     @unique @default(cuid())
+  service_name String
+  shipments    Shipment[]
+}
+
+// Define the Employee model
+model Employee {
+  id        Int        @id @default(autoincrement())
+  unique_id String     @unique @default(cuid())
+  name      String
+  position  String
+  email     String     @unique
+  shipments Shipment[]
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String     @unique
+}
+
+// Define the Invoice model
+model Invoice {
+  id             Int        @id @default(autoincrement())
+  unique_id      String     @unique @default(cuid())
+  invoice_number String
+  amount         Float
+  due_date       DateTime
+  shipments      Shipment[]
+  Payment        Payment?   @relation(fields: [paymentId], references: [id])
+  paymentId      Int?
+}
+
+// Define the Payment model
+model Payment {
+  id           Int        @id @default(autoincrement())
+  unique_id    String     @unique @default(cuid())
+  amount_paid  Float
+  payment_date DateTime
+  invoices     Invoice[]
+  Shipment     Shipment[]
+}
+
+// Define the Location model
+model Location {
+  id            Int        @id @default(autoincrement())
+  unique_id     String     @unique @default(cuid())
+  location_name String
+  latitude      Float
+  longitude     Float
+  shipments     Shipment[]
+}
+
+// Define the Vehicle model
+model Vehicle {
+  id             Int        @id @default(autoincrement())
+  unique_id      String     @unique @default(cuid())
+  vehicle_number String
+  vehicle_type   String
+  capacity_kg    Float
+  shipments      Shipment[]
+}
+
+// Define the Expense model
+model Expense {
+  id           Int        @id @default(autoincrement())
+  unique_id    String     @unique @default(cuid())
+  expense_type String
+  amount       Float
+  expense_date DateTime
+  shipments    Shipment[]
+}

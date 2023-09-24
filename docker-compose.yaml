@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  eposta:
+    image: postgres:15.4-alpine3.17
+    container_name: eposta
+    environment:
+      POSTGRES_USER: eposta
+      POSTGRES_PASSWORD: eposta
+      POSTGRES_DB: eposta
+    ports:
+      - "5430:5432"
+    volumes:
+      - ./data:/var/lib/postgresql/data
